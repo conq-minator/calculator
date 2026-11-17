@@ -1,0 +1,93 @@
+package com.example.calculator
+
+import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var tvDisplay: TextView
+    private var firstOperand = 0.0
+    private var pendingOperator = ""
+    private var isNewInput = true
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        tvDisplay = findViewById(R.id.tvDisplay)
+
+        val numberIds = listOf(
+            R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4,
+            R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9
+        )
+
+        for (id in numberIds) {
+            findViewById<Button>(id).setOnClickListener { view ->
+                val digit = (view as Button).text.toString()
+                onDigitPressed(digit)
+            }
+        }
+
+        val operatorIds = mapOf(
+            R.id.btnAdd to "+",
+            R.id.btnSubtract to "-",
+            R.id.btnMultiply to "*",
+            R.id.btnDivide to "/"
+        )
+
+        for ((id, op) in operatorIds) {
+            findViewById<Button>(id).setOnClickListener {
+                onOperatorPressed(op)
+            }
+        }
+
+        findViewById<Button>(R.id.btnEquals).setOnClickListener { onEqualsPressed() }
+        findViewById<Button>(R.id.btnClear).setOnClickListener { onClearPressed() }
+    }
+
+    private fun onDigitPressed(digit: String) {
+        if (isNewInput || tvDisplay.text.toString() == "0") {
+            tvDisplay.text = digit
+            isNewInput = false
+        } else {
+            tvDisplay.append(digit)
+        }
+    }
+
+    private fun onOperatorPressed(op: String) {
+        firstOperand = tvDisplay.text.toString().toDoubleOrNull() ?: 0.0
+        pendingOperator = op
+        isNewInput = true
+    }
+
+    private fun onEqualsPressed() {
+        if (pendingOperator.isEmpty()) return
+
+        val secondOperand = tvDisplay.text.toString().toDoubleOrNull() ?: 0.0
+        val result = when (pendingOperator) {
+            "+" -> firstOperand + secondOperand
+            "-" -> firstOperand - secondOperand
+            "*" -> firstOperand * secondOperand
+            "/" -> if (secondOperand != 0.0) firstOperand / secondOperand else Double.NaN
+            else -> 0.0
+        }
+
+        tvDisplay.text = when {
+            result.isNaN() -> "Error"
+            result % 1.0 == 0.0 -> result.toLong().toString()
+            else -> result.toString()
+        }
+
+        pendingOperator = ""
+        isNewInput = true
+    }
+
+    private fun onClearPressed() {
+        tvDisplay.text = "0"
+        firstOperand = 0.0
+        pendingOperator = ""
+        isNewInput = true
+    }
+}
